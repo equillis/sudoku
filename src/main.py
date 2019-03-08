@@ -94,6 +94,7 @@ class appGUI:
                                 y = (j * appGUI.canvas_step)+(appGUI.line_width_bold)+10,
                                 anchor = tk.NW)
                     self.entry_number.append(entry)
+                    #somecomment
                     
  
         

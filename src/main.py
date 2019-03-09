@@ -6,9 +6,52 @@ Created on Mar 6, 2019
 
 import tkinter as tk
 import numpy
+import copy
 
-
-class appGUI:   
+class game():
+    game_space = numpy.zeros((9,9),numpy.dtype(object))
+    user_game_space = copy.deepcopy(game_space)
+    def create_board(self):
+    #create a random board
+    #exemplary board:
+        game.game_space[3][1] = 2
+        game.game_space[8][1] = 9
+        game.game_space[0][2] = 5
+        game.game_space[1][2] = 6
+        game.game_space[2][2] = 3
+        game.game_space[3][2] = 7
+        game.game_space[4][2] = 4
+        game.game_space[2][3] = 2
+        game.game_space[4][3] = 9
+        game.game_space[8][3] = 8
+        game.game_space[1][4] = 4
+        game.game_space[7][4] = 1
+        game.game_space[8][4] = 3
+        game.game_space[0][5] = 8
+        game.game_space[4][5] = 6
+        game.game_space[6][5] = 5
+        game.game_space[0][6] = 9
+        game.game_space[1][6] = 2
+        game.game_space[4][6] = 3
+        game.game_space[7][6] = 4
+        game.game_space[8][6] = 7
+        game.game_space[2][7] = 1
+        game.game_space[6][7] = 6
+        game.game_space[7][7] = 9
+        game.game_space[0][8] = 6
+        game.game_space[2][8] = 5
+        game.game_space[3][8] = 9
+        game.game_space[5][8] = 4
+        game.game_space[8][8] = 2
+                
+    #def win(self):
+        #check if the game is won (only at the end)
+               
+    
+    #def wrong_number(self):
+        #check if the written number is correct (during the play)
+        
+class GUI:   
     def __init__(self, master):
         self.master = master
         self.board_frame = tk.Frame(master, height = self.canvas_size,
@@ -16,17 +59,19 @@ class appGUI:
         self.board_frame.place(x = self.grid_position_x, 
                           y = self.grid_position_y, anchor = tk.CENTER)
         self.entry_number = []
-        appGUI.main_window(self, master)
-        appGUI.buttons(self, master)
-        self.canvas = tk.Canvas(self.board_frame, bg = 'white', width = appGUI.canvas_size, 
+        GUI.main_window(self, master)
+        GUI.buttons(self, master)
+        self.canvas = tk.Canvas(self.board_frame, bg = 'white', width = self.canvas_size, 
                                 height = self.canvas_size)
         self.canvas.place(x = (self.canvas_size)/2, 
                           y = (self.canvas_size)/2, anchor = tk.CENTER)
         self.canvas.bind('<Button-1>', self.cell_clicked)
-        appGUI.create_grid(self)
-        appGUI.fill_grid(self)
+        self.canvas.bind("<Key>", self.command_key)
+        GUI.create_grid(self)
+        GUI.fill_grid(self)
     
-   
+    
+    
     window_height = 700
     window_width = 600
     grid_position_x = window_width/2
@@ -41,6 +86,7 @@ class appGUI:
     canvas_size = board_size + margin
     canvas_step = 50
     button_number = []
+    row, col = -1, -1
     label_array = numpy.zeros((9,9),numpy.dtype(object))
    
     
@@ -56,7 +102,7 @@ class appGUI:
         for i in range(9):
             b = tk.Button(self.button_frame, text = str(i + 1), 
                           font = ('Helvetica', '14', 'bold'), 
-                          pady = 15, padx = 20)
+                          pady = 15, padx = 20, command = lambda i=i: GUI.command_button(self, i+1))
             b.grid(column = i, row = 1)
             self.button_number.append(b)
       
@@ -86,65 +132,53 @@ class appGUI:
                                             text = str(game.game_space[i][j]), 
                                             font = ('Helvetica', '16', 'bold'),
                                             anchor = tk.CENTER)
+    def fill_user_grid(self):
+        for i in range(9):
+            for j in range(9):
+                if game.user_game_space[i][j] != 0:
+                    self.canvas.create_text(i * self.canvas_step + self.margin + self.canvas_step/2, 
+                                            j * self.canvas_step + self.margin + self.canvas_step/2,
+                                            text = str(game.user_game_space[i][j]), 
+                                            font = ('Helvetica', '16', 'bold'),
+                                            anchor = tk.CENTER)
+        
     def cell_clicked(self, event):
         x, y = event.x, event.y
-        
+        self.canvas.focus_set()
         if 0 < x < self.canvas_size and 0 < y < self.canvas_size:
             row = int((y-self.margin)/self.canvas_step)
             col = int((x-self.margin)/self.canvas_step)
-            print(row, col)
-            self.canvas.focus_set()
-            self.canvas.create_rectangle(self.margin + col * self.canvas_step + 2, 
-                                         self.margin + row * self.canvas_step + 2, 
-                                         self.margin + (col + 1) * self.canvas_step - 2, 
-                                         self.margin + (row + 1) * self.canvas_step - 2,
-                                         outline = 'red', width = 4)
-        
-class game():
-    game_space = numpy.zeros((9,9),numpy.dtype(object))
-    user_game_space = game_space
-    def create_board(self):
-    #create a random board
-    #exemplary board:
-        game.game_space[3][1] = '2'
-        game.game_space[8][1] = '9'
-        game.game_space[0][2] = '5'
-        game.game_space[1][2] = '6'
-        game.game_space[2][2] = '3'
-        game.game_space[3][2] = '7'
-        game.game_space[4][2] = '4'
-        game.game_space[2][3] = '2'
-        game.game_space[4][3] = '9'
-        game.game_space[8][3] = '8'
-        game.game_space[1][4] = '4'
-        game.game_space[7][4] = '1'
-        game.game_space[8][4] = '3'
-        game.game_space[0][5] = '8'
-        game.game_space[4][5] = '6'
-        game.game_space[6][5] = '5'
-        game.game_space[0][6] = '9'
-        game.game_space[1][6] = '2'
-        game.game_space[4][6] = '3'
-        game.game_space[7][6] = '4'
-        game.game_space[8][6] = '7'
-        game.game_space[2][7] = '1'
-        game.game_space[6][7] = '6'
-        game.game_space[7][7] = '9'
-        game.game_space[0][8] = '6'
-        game.game_space[2][8] = '5'
-        game.game_space[3][8] = '9'
-        game.game_space[5][8] = '4'
-        game.game_space[8][8] = '2'
-                
-    #def win(self):
-        #check if the game is won (only at the end)
-               
+            print(game.game_space[col][row])
+            print(game.user_game_space[col][row])
+            if (row, col) == (self.row, self.col):
+                self.row, self.col = -1, -1
+                self.canvas.delete('highlight')
+            elif game.game_space[col][row] == 0:
+                self.row, self.col = row, col
+                self.canvas.delete('highlight')
+                if self.row >= 0 and self.col >= 0:
+                    self.canvas.create_rectangle(self.margin + col * self.canvas_step + 2, 
+                                             self.margin + row * self.canvas_step + 2, 
+                                             self.margin + (col + 1) * self.canvas_step - 2, 
+                                             self.margin + (row + 1) * self.canvas_step - 2,
+                                             outline = 'red', width = 4, tags = 'highlight')
     
-    #def wrong_number(self):
-        #check if the written number is correct (during the play)
+    def command_key(self, event):
+        if event.char in "123456789":
+            game.user_game_space[self.col][self.row] = int(event.char)
+            GUI.fill_user_grid(self)
+            self.canvas.delete('highlight')
+        
+    def command_button(self, button):
+        game.user_game_space[self.col][self.row] = button
+        GUI.fill_user_grid(self)
+        self.canvas.delete('highlight')
+        
+        
+
                 
       
                 
 root = tk.Tk()
-app = appGUI(root)
+app = GUI(root)
 root.mainloop()

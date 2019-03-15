@@ -8,6 +8,8 @@ import tkinter as tk
 import numpy
 import copy
 import random
+import time
+
 
 class game():
     game_space = numpy.zeros((9,9))
@@ -50,12 +52,12 @@ class game():
         game.game_space = numpy.array([[2, 9, 7, 1, 8, 3, 4, 5, 6],
                                        [1, 8, 4, 2, 5, 6, 3, 7, 9],
                                        [5, 6, 3, 7, 4, 9, 2, 8, 1],
-                                       [3, 0, 2, 4, 9, 0, 7, 6, 8],
+                                       [3, 0, 2, 4, 9, 1, 7, 6, 8],
                                        [7, 4, 6, 5, 2, 8, 9, 1, 3],
                                        [8, 1, 9, 3, 6, 7, 5, 2, 4],
                                        [9, 2, 8, 6, 3, 5, 1, 4, 7],
                                        [4, 3, 1, 8, 7, 2, 6, 9, 5],
-                                       [6, 7, 0, 9, 1, 4, 8, 3, 2]])
+                                       [6, 7, 5, 9, 1, 4, 8, 3, 2]])
         game.user_game_space = copy.deepcopy(game.game_space)
     #exemplary solved board:
         game.game_space_solved = numpy.array([[2, 9, 7, 1, 8, 3, 4, 5, 6],
@@ -74,10 +76,24 @@ class game():
         else:
             return False
     
-    #def check_mistake(self, row, col):
-     #   if game.user_game_space[row][col] is not game.game_space_solved[row][col]:
-      #      GUI.highlight_mistake(self)
-        
+    def check_mistake(self, row, col):
+        for i in range(9):
+            if (game.user_game_space[col][row] == game.user_game_space[col][i] and
+                    game.user_game_space[col][row] != game.game_space_solved[col][row]):
+                col_arg, row_arg = col, i
+                GUI.highlight_mistake(self, col, row, col_arg, row_arg)  
+            if (game.user_game_space[col][row] == game.user_game_space[i][row] and
+                    game.user_game_space[col][row] != game.game_space_solved[col][row]):
+                col_arg, row_arg = i, row
+                GUI.highlight_mistake(self, col, row, col_arg, row_arg)   
+        block_x = int(col/3)
+        block_y = int(row/3)
+        for i in range(block_x*3, block_x*3 + 3):
+            for j in range(block_y*3, block_y*3 + 3):
+                if (game.user_game_space[col][row] == game.user_game_space[i][j] and
+                    game.user_game_space[col][row] != game.game_space_solved[col][row]):
+                    GUI.highlight_mistake(self, col, row, i, j)  
+                
     
     def create_puzzle(self):
         '''row = random.sample(range(1, 10), 9)
@@ -148,7 +164,7 @@ class GUI:
     def control_buttons(self, master):
         self.control_buttons_frame = tk.Frame(master)
         self.control_buttons_frame.place(x = (self.window_width+self.board_size)/2, 
-                                         y = self.grid_position_y - (self.board_size/2)) #########automate numbers! 
+                                         y = self.grid_position_y - (self.board_size/2))
         erase_button = tk.Button(self.control_buttons_frame, text = "ERASE",
                                  command = lambda: GUI.command_erase(self))
         erase_button.grid()
@@ -176,18 +192,12 @@ class GUI:
         for i in range(9):
             for j in range(9):
                 if game.game_space[i][j] != 0:
-                    self.canvas.create_text(i * self.canvas_step + self.margin + self.canvas_step/2, 
+                    self.text_id[i][j] = self.canvas.create_text(i * self.canvas_step + self.margin + self.canvas_step/2, 
                                             j * self.canvas_step + self.margin + self.canvas_step/2,
                                             text = str(game.game_space[i][j]), 
-                                            font = ('Helvetica', '16', 'bold'),
+                                            font = ('Helvetica', '16', 'bold'), tags = "board",
                                             anchor = tk.CENTER)
 
-                '''if game.puzzle_array[i][j] != 0:
-                    self.canvas.create_text(i * self.canvas_step + self.margin + self.canvas_step/2, 
-                                            j * self.canvas_step + self.margin + self.canvas_step/2,
-                                            text = str(int(game.puzzle_array[i][j])), 
-                                            font = ('Helvetica', '16', 'bold'),
-                                            anchor = tk.CENTER)'''
     def fill_user_grid(self):
         for i in range(9):
             for j in range(9):
@@ -198,12 +208,14 @@ class GUI:
                                             text = str(int(game.user_game_space[i][j])), 
                                             font = ('Helvetica', '16', 'bold'),
                                             anchor = tk.CENTER)
-                    #game.check_mistake(self, i, j)
                 elif game.user_game_space[i][j] == 0:
                     self.canvas.delete(int(self.text_id[i][j]))
-        self.col, self.row = -1, -1
         self.canvas.delete('highlight')
-        game.check_win(self)
+        if game.check_win(self) == False:
+            game.check_mistake(self, self.row, self.col)
+            self.col, self.row = -1, -1
+        else:
+            GUI.win_animation(self)
                     
     def cell_clicked(self, event):
         x, y = event.x, event.y
@@ -223,22 +235,32 @@ class GUI:
                                              self.margin + (col + 1) * self.canvas_step - 2, 
                                              self.margin + (row + 1) * self.canvas_step - 2,
                                              outline = 'red', width = 4, tags = 'highlight')
-    
+                    
+    def highlight_mistake(self, row, col, i, j):
+        self.canvas.delete(int(self.text_id[i][j]))
+        self.text_id[i][j] = self.canvas.create_text(i * self.canvas_step + self.margin + self.canvas_step/2, 
+                                                     j * self.canvas_step + self.margin + self.canvas_step/2,
+                                                     text = str(int(game.user_game_space[i][j])), 
+                                                     font = ('Helvetica', '16', 'bold'), fill = 'red',
+                                                     anchor = tk.CENTER)        
+        
     def command_key(self, event):
         if self.row >= 0 and self.col >= 0:
             if event.char in "1234567890":
                 game.user_game_space[self.col][self.row] = int(event.char)
                 GUI.fill_user_grid(self)
+
         
     def command_button(self, button):
         if self.row >= 0 and self.col >= 0:
             game.user_game_space[self.col][self.row] = button
             GUI.fill_user_grid(self)
-    
+            
     def command_erase(self):
-        if self.row >= 0 and self.col >= 0:
-            game.user_game_space[self.col][self.row] = 0
-            GUI.fill_user_grid(self)
+        if game.check_win(self) == False:
+            if self.row >= 0 and self.col >= 0:
+                game.user_game_space[self.col][self.row] = 0
+                GUI.fill_user_grid(self)
             
     def command_hint(self):
         if game.check_win(self) == False:
@@ -255,9 +277,17 @@ class GUI:
                     zero_y = zero_elements_array[1][0]
             game.user_game_space[zero_x][zero_y] = game.game_space_solved[zero_x][zero_y] 
             GUI.fill_user_grid(self)  
-        
-    #def highlight_mistake(self):
-        ####  
+    
+    def win_animation(self):
+        for i in range(9):
+            for j in range(9):
+                self.canvas.delete(int(self.text_id[i][j]))
+        self.canvas.create_text(self.canvas_size/2, self.canvas_size/2,
+                                text = 'YOU WON!', fill = 'blue',
+                                font = ('Helvetica', '62', 'bold'),
+                                anchor = tk.CENTER)
+                
+ 
            
 root = tk.Tk()
 app = GUI(root)

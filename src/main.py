@@ -184,12 +184,14 @@ class GUI:
     
     def control_buttons(self, master):
         control_buttons_frame = tk.Frame(master)
-        control_buttons_frame.place(x = (self.window_width+self.board_size)/2, 
-                                         y = self.grid_position_y - (self.board_size/2))
+        control_buttons_frame.place(x = (self.window_width + self.canvas_size)/2, 
+                                         y = (self.grid_position_y - self.board_size/2))
         erase_button = tk.Button(control_buttons_frame, text = "ERASE",
+                                 width = 5, height = 3,
                                  command = lambda: GUI.command_erase(self))
         erase_button.grid()
         hint_button = tk.Button(control_buttons_frame, text = "HINT",
+                                width = 5, height = 3,
                                 command = lambda: GUI.command_hint(self))
         hint_button.grid()
     

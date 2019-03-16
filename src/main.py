@@ -11,6 +11,8 @@ import random
 import time
 
 
+
+
 class game():
     game_space = numpy.zeros((9,9))
     game_space_solved = numpy.zeros((9, 9))
@@ -79,22 +81,23 @@ class game():
             return False
     
     def check_mistake(self, row, col):
-        for i in range(9):
-            if (game.user_game_space[col][row] == game.user_game_space[col][i] and
-                    game.user_game_space[col][row] != game.game_space_solved[col][row]):
-                col_arg, row_arg = col, i
-                GUI.highlight_mistake(self, col, row, col_arg, row_arg)  
-            if (game.user_game_space[col][row] == game.user_game_space[i][row] and
-                    game.user_game_space[col][row] != game.game_space_solved[col][row]):
-                col_arg, row_arg = i, row
-                GUI.highlight_mistake(self, col, row, col_arg, row_arg)   
-        block_x = int(col/3)
-        block_y = int(row/3)
-        for i in range(block_x*3, block_x*3 + 3):
-            for j in range(block_y*3, block_y*3 + 3):
-                if (game.user_game_space[col][row] == game.user_game_space[i][j] and
-                    game.user_game_space[col][row] != game.game_space_solved[col][row]):
-                    GUI.highlight_mistake(self, col, row, i, j)  
+        if game.user_game_space[col][row] != 0:
+            for i in range(9):
+                if (game.user_game_space[col][row] == game.user_game_space[col][i] and
+                        game.user_game_space[col][row] != game.game_space_solved[col][row]):
+                    col_arg, row_arg = col, i
+                    GUI.highlight_mistake(self, col, row, col_arg, row_arg)  
+                if (game.user_game_space[col][row] == game.user_game_space[i][row] and
+                        game.user_game_space[col][row] != game.game_space_solved[col][row]):
+                    col_arg, row_arg = i, row
+                    GUI.highlight_mistake(self, col, row, col_arg, row_arg)   
+            block_x = int(col/3)
+            block_y = int(row/3)
+            for i in range(block_x*3, block_x*3 + 3):
+                for j in range(block_y*3, block_y*3 + 3):
+                    if (game.user_game_space[col][row] == game.user_game_space[i][j] and
+                            game.user_game_space[col][row] != game.game_space_solved[col][row]):
+                        GUI.highlight_mistake(self, col, row, i, j)  
     
     def new_game(self):
         game.create_puzzle(self)
@@ -105,7 +108,6 @@ class game():
         GUI.timer(self)      
     
     def create_puzzle(self):
-        print('NEW GAME')
         '''row = random.sample(range(1, 10), 9)
         for i in range(9):
             game.puzzle_array[0][i] = row[i]
@@ -134,6 +136,7 @@ class GUI:
     canvas_step = 50
     counter = 0
     timer_run = False
+    pause_state = False
     time_of_round = 0
     minutes = 0
     seconds = 0
@@ -161,6 +164,7 @@ class GUI:
         self.timer.place(x = (self.window_width + self.canvas_size)/2, 
                          y = 20, anchor = tk.NE)
         GUI.timer(self)
+
     
     
 
@@ -203,11 +207,16 @@ class GUI:
         new_game_button = tk.Button(function_buttons_frame, text = "NEW GAME",
                                     wraplength = 50, width = 15,
                                  command = lambda: game.new_game(self))
-        new_game_button.grid(row = 0, column = 0, padx = 5)
+        new_game_button.grid(row = 0, column = 0, padx = 2)
         reset_board_button = tk.Button(function_buttons_frame, text = "RESET BOARD",
                                        wraplength = 50, width = 15,
                                 command = lambda: GUI.reset_board(self))
-        reset_board_button.grid(row = 0, column = 1, padx = 5)
+        reset_board_button.grid(row = 0, column = 1, padx = 2)
+        pause_game_button = tk.Button(function_buttons_frame, text = 'PAUSE GAME',
+                                      wraplength = 50, width = 15,
+                                      command = lambda: GUI.pause_game(self))
+        
+        pause_game_button.grid(row = 0, column = 2, padx = 2)
       
     def create_grid(self):      
         for i in range(2, self.canvas_size + 1, self.canvas_step):
@@ -250,7 +259,7 @@ class GUI:
                                             text = str(int(game.user_game_space[i][j])), 
                                             font = ('Helvetica', '16', 'bold'),
                                             anchor = tk.CENTER)
-                elif game.user_game_space[i][j] == 0:
+                else:
                     self.canvas.delete(int(self.text_id[i][j]))
         self.canvas.delete('highlight')
         if game.check_win(self) == False:
@@ -339,10 +348,33 @@ class GUI:
                                 text = 'Your time: ' + GUI.time_format(self), fill = 'blue',
                                 font = ('Helvetica', '18', 'bold'),
                                 anchor = tk.CENTER)
+        
+    def pause_game(self):
+        if not GUI.pause_state:
+            GUI.pause_state = True
+            GUI.timer_run = False
+            for i in range(9):
+                for j in range(9):
+                    self.canvas.delete(int(self.text_id[i][j]))
+            self.canvas.create_text(self.canvas_size/2, self.canvas_size/2,
+                                    text = 'PAUSE', fill = 'blue',
+                                    font = ('Helvetica', '62', 'bold'),
+                                    anchor = tk.CENTER, tags = 'pause')
+            ####('RESUME GAME')
+        else:
+            GUI.pause_state = False
+            self.canvas.delete('pause')
+            GUI.fill_grid(self)
+            GUI.fill_user_grid(self)
+            GUI.timer_run = True
+            GUI.timer(self)
+            ####self.pause_text.set('PAUSE GAME')
+        
+        
+        
+        
     def timer(self):
         if GUI.timer_run:
-            seconds = int(GUI.counter%60)
-            minutes = int(GUI.counter/60)
             self.timer.config(text = GUI.time_format(self))
             self.timer.after(1000, GUI.timer, self)
             GUI.counter += 1

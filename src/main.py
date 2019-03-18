@@ -79,23 +79,29 @@ class game():
         else:
             return False
     
-    def check_mistake(self, row, col):
+    def check_mistake(self, col, row):
+        highlighted_counter = 0
         for i in range(9):
-            if (game.user_game_space[col][row] == game.user_game_space[col][i] and
-                    game.user_game_space[col][row] != game.game_space_solved[col][row]):
+            if (game.user_game_space[col][row] == game.user_game_space[col][i]): 
                 col_arg, row_arg = col, i
-                GUI.highlight_mistake(self, col, row, col_arg, row_arg)  
-            if (game.user_game_space[col][row] == game.user_game_space[i][row] and
-                    game.user_game_space[col][row] != game.game_space_solved[col][row]):
+                if not (col == col_arg and row == row_arg):
+                    GUI.highlight_mistake(self, col_arg, row_arg)
+                    highlighted_counter += 1 
+            if (game.user_game_space[col][row] == game.user_game_space[i][row]): 
                 col_arg, row_arg = i, row
-                GUI.highlight_mistake(self, col, row, col_arg, row_arg)   
+                if not (col == col_arg and row == row_arg):
+                    GUI.highlight_mistake(self, col_arg, row_arg)
+                    highlighted_counter += 1    
         block_x = int(col/3)
         block_y = int(row/3)
         for i in range(block_x*3, block_x*3 + 3):
             for j in range(block_y*3, block_y*3 + 3):
-                if (game.user_game_space[col][row] == game.user_game_space[i][j] and
-                    game.user_game_space[col][row] != game.game_space_solved[col][row]):
-                    GUI.highlight_mistake(self, col, row, i, j)  
+                if (game.user_game_space[col][row] == game.user_game_space[i][j] and 
+                    col != i and row != j): 
+                    GUI.highlight_mistake(self, i, j)
+                    highlighted_counter += 1 
+        if highlighted_counter != 0:
+             GUI.highlight_mistake(self, col, row) 
     
     def new_game(self):
         filename = 'easy.txt'
@@ -321,7 +327,7 @@ class GUI:
         self.canvas.delete('highlight')
         if game.check_win(self) == False:
             if game.user_game_space[self.col][self.row] != 0:
-                game.check_mistake(self, self.row, self.col)
+                game.check_mistake(self, self.col, self.row)
             self.col, self.row = -1, -1
         else:
             GUI.win_animation(self)
@@ -345,11 +351,12 @@ class GUI:
                                              self.margin + (row + 1) * self.canvas_step - 2,
                                              outline = 'red', width = 4, tags = 'highlight')
                     
-    def highlight_mistake(self, row, col, i, j):
-        self.canvas.delete(int(self.text_id[i][j]))
-        self.text_id[i][j] = self.canvas.create_text(i * self.canvas_step + self.margin + self.canvas_step/2, 
-                                                     j * self.canvas_step + self.margin + self.canvas_step/2,
-                                                     text = str(int(game.user_game_space[i][j])), 
+    def highlight_mistake(self, col, row):
+        #if game.user_game_space[col][row] != 0:
+        self.canvas.delete(int(self.text_id[col][row]))
+        self.text_id[col][row] = self.canvas.create_text(col * self.canvas_step + self.margin + self.canvas_step/2, 
+                                                     row * self.canvas_step + self.margin + self.canvas_step/2,
+                                                     text = str(game.user_game_space[col][row]), 
                                                      font = ('Helvetica', '16', 'bold'), fill = 'red',
                                                      anchor = tk.CENTER)        
     

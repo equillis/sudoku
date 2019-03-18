@@ -320,7 +320,8 @@ class GUI:
                     self.canvas.delete(int(self.text_id[i][j]))
         self.canvas.delete('highlight')
         if game.check_win(self) == False:
-            game.check_mistake(self, self.row, self.col)
+            if game.user_game_space[self.col][self.row] != 0:
+                game.check_mistake(self, self.row, self.col)
             self.col, self.row = -1, -1
         else:
             GUI.win_animation(self)

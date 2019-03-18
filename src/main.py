@@ -9,8 +9,12 @@ import numpy
 import copy
 import random
 import time
+<<<<<<< HEAD
 from numpy.core._multiarray_umath import dtype
 
+=======
+import shelve
+>>>>>>> game_save
 
 
 
@@ -192,6 +196,68 @@ class SudokuPuzzle():
                 self.puzzle_solved_matrix[col][row] = list[self.puzzle_solved_matrix[col][row] - 1]   
                    
                 
+               
+                 
+class DialogBox(tk.Toplevel):
+    def __init__(self, master):
+        tk.Toplevel.__init__(self, master)
+        self.transient(master)
+        self.master = master
+
+        self.dialog_text()
+        self.buttonbox(master)
+        self.grab_set()
+
+        self.protocol("WM_DELETE_WINDOW", self.cancel)
+
+        self.geometry("+%d+%d" % (GUI.window_width/2, GUI.window_height/2))
+        self.wait_window(self)
+
+    #
+    # construction hooks
+
+    def dialog_text(self):
+        tk.Label(self, text="Do you want to save game progress before you quit?").pack()
+
+
+    def buttonbox(self, master):
+        # add standard button box. override if you don't want the
+        # standard buttons
+
+        button_frame = tk.Frame(self)
+        
+        b = tk.Button(button_frame, text="SAVE", width=5, command= self.save)
+        b.pack(side=tk.LEFT, padx=5, pady=5)
+        b = tk.Button(button_frame, text="QUIT", width=5, command=self.quit)
+        b.pack(side=tk.LEFT, padx=5, pady=5)
+        b = tk.Button(button_frame, text="CANCEL", width=5, command=self.cancel)
+        b.pack(side=tk.LEFT, padx=5, pady=5)
+
+        self.bind("<Return>", self.save)
+        self.bind("<Escape>", self.cancel)
+        button_frame.pack()
+        
+
+    def save(self, event=None):
+        file = shelve.open('cstat')
+        file['game_space'] = game.game_space
+        file['game_space_solved'] = game.game_space_solved
+        file['use_game_space'] = game.user_game_space
+        file.close()
+        self.master.destroy()
+        
+    def cancel(self, event=None):
+
+        self.master.focus_set()
+        self.destroy()
+
+    def quit(self):
+        self.master.destroy()
+
+
+    
+
+
 class GUI:   
     
     text_id = numpy.empty((9, 9))
@@ -238,10 +304,13 @@ class GUI:
         self.timer.place(x = (self.window_width + self.canvas_size)/2, 
                          y = 20, anchor = tk.NE)
         GUI.timer(self)
+        master.protocol("WM_DELETE_WINDOW", self.destroy_action)
 
     
     
-
+    def destroy_action(self):
+        destroy_dialog_box = DialogBox(self.master)
+        
    
     
     def main_window(self, master):
@@ -466,6 +535,7 @@ class GUI:
  
 root = tk.Tk()
 app = GUI(root)
+
 root.mainloop()
 
 '''puzzle.read_file(filename)

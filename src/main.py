@@ -9,6 +9,7 @@ import numpy
 import copy
 import random
 import time
+from numpy.core._multiarray_umath import dtype
 
 
 class game():
@@ -16,10 +17,10 @@ class game():
     game_space_solved = numpy.zeros((9, 9))
     user_game_space = numpy.zeros((9, 9))
     #puzzle_array = [9][9] 
-    def create_board(self):
+    '''def create_board(self):
     #create a random board
     #exemplary board:
-        '''game.game_space[3][1] = 2
+        game.game_space[3][1] = 2
         game.game_space[8][1] = 9
         game.game_space[0][2] = 5
         game.game_space[1][2] = 6
@@ -47,7 +48,7 @@ class game():
         game.game_space[2][8] = 5
         game.game_space[3][8] = 9
         game.game_space[5][8] = 4
-        game.game_space[8][8] = 2'''
+        game.game_space[8][8] = 2
         
         game.game_space = numpy.array([[2, 9, 7, 1, 8, 3, 4, 5, 6],
                                        [1, 8, 4, 2, 5, 6, 3, 7, 9],
@@ -68,7 +69,7 @@ class game():
                                               [8, 1, 9, 3, 6, 7, 5, 2, 4],
                                               [9, 2, 8, 6, 3, 5, 1, 4, 7],
                                               [4, 3, 1, 8, 7, 2, 6, 9, 5],
-                                              [6, 7, 5, 9, 1, 4, 8, 3, 2]])
+                                              [6, 7, 5, 9, 1, 4, 8, 3, 2]])'''
                 
     def check_win(self):
         if numpy.array_equal(game.game_space_solved, game.user_game_space):
@@ -97,24 +98,90 @@ class game():
                     GUI.highlight_mistake(self, col, row, i, j)  
     
     def new_game(self):
-        game.create_puzzle(self)
-        game.create_board(self)
+        filename = 'easy.txt'
+        sudoku_game = SudokuPuzzle(filename)
+        game.game_space = sudoku_game.puzzle_matrix
+        game.user_game_space = copy.deepcopy(game.game_space)
+        game.game_space_solved = sudoku_game.puzzle_solved_matrix
         GUI.create_grid(self) 
         GUI.fill_grid(self)
         GUI.timer_run = True
         GUI.timer(self)      
     
-    def create_puzzle(self):
-        print('NEW GAME')
-        '''row = random.sample(range(1, 10), 9)
-        for i in range(9):
-            game.puzzle_array[0][i] = row[i]
-        for i in range(1, 9):
-            for j in range(9):
-                for k in range(i):
-                    game.puzzle_array[i][j] = random.randint(1, 9)
-                    while game.puzzle_array[i][j] == game.puzzle_array[k][j]:
-                        game.puzzle_array[i][j] = random.randint(1, 9)'''                
+class SudokuPuzzle():
+    SIZE = 100
+    puzzle = ''
+    puzzle_solved = ''
+    puzzle_matrix = numpy.empty((9,9), dtype = numpy.int8)
+    puzzle_solved_matrix = numpy.empty((9,9), dtype = numpy.int8)
+
+    
+    def __init__(self, filename):
+        self.read_file(filename)
+        self.sudoku_matrix()
+        self.rotate()
+        self.flip()
+        self.change()
+
+    
+    def read_file(self, filename):
+        puzzle_number = random.randint(0, SudokuPuzzle.SIZE - 1)
+        with open(filename) as file:
+            for i, line in enumerate(file):
+                if i == puzzle_number * 2:
+                    self.puzzle = line.strip()
+                    continue
+                if i == puzzle_number * 2 + 1:
+                    self.puzzle_solved = line.strip()
+                    break
+
+        
+    def sudoku_matrix(self):
+        col, row = 0, 0
+        for numbers in self.puzzle:
+            self.puzzle_matrix[col][row] = numbers
+            col += 1
+            if not col%9:
+                row += 1
+                col = 0
+        col, row = 0, 0       
+        for numbers in self.puzzle_solved:
+            self.puzzle_solved_matrix[col][row] = numbers
+            col += 1
+            if not col%9:
+                row += 1
+                col = 0
+    
+    def rotate(self):
+        k = random.randint(0, 3)
+        if k:
+            numpy.rot90(self.puzzle_matrix, k = k)
+            numpy.rot90(self.puzzle_solved_matrix, k = k)
+    
+    def flip(self):
+        k = random.randint(0, 3)
+        if k == 1 or k == 2:
+            numpy.flip(self.puzzle_matrix, k-1)
+            numpy.flip(self.puzzle_solved_matrix, k-1)
+        elif k == 3:
+            numpy.flip(self.puzzle_matrix, 0)
+            numpy.flip(self.puzzle_solved_matrix, 0)
+            numpy.flip(self.puzzle_matrix, 1)
+            numpy.flip(self.puzzle_solved_matrix, 1)
+            
+            
+    
+    def change(self):
+        list = random.sample(range(1,10), 9)
+        '''print(list)
+        print(self.puzzle_matrix)
+        print(self.puzzle_solved_matrix)'''
+        for col in range(9):
+            for row in range(9):
+                if self.puzzle_matrix[col][row] != 0:
+                    self.puzzle_matrix[col][row] = list[self.puzzle_matrix[col][row] - 1]
+                self.puzzle_solved_matrix[col][row] = list[self.puzzle_solved_matrix[col][row] - 1]   
+                   
                  
 class GUI:   
     
@@ -227,7 +294,6 @@ class GUI:
                                         tags = 'grid')
        
     def fill_grid(self):
-        game.create_board(self)
         for i in range(9):
             for j in range(9):
                 self.canvas.delete(int(self.text_id[i][j]))
@@ -323,7 +389,7 @@ class GUI:
                 else:
                     zero_x = zero_elements_array[0][0]
                     zero_y = zero_elements_array[1][0]
-            game.user_game_space[zero_x][zero_y] = game.game_space_solved[zero_x][zero_y] 
+                game.user_game_space[zero_x][zero_y] = game.game_space_solved[zero_x][zero_y] 
             GUI.fill_user_grid(self)  
     
     def win_animation(self):
@@ -356,7 +422,12 @@ class GUI:
             text = '%d:%d' % (minutes, seconds)
         return text
 
-           
+ 
 root = tk.Tk()
 app = GUI(root)
 root.mainloop()
+
+'''puzzle.read_file(filename)
+puzzle.sudoku_matrix(puzzle.puzzle, puzzle.puzzle_matrix)
+puzzle.sudoku_matrix(puzzle.puzzle_solved, puzzle.puzzle_solved_matrix)
+puzzle.change()'''
